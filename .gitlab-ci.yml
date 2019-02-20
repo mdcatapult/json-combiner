@@ -1,5 +1,9 @@
 image: openjdk:latest
 
+stages:
+  - test
+  - assembly
+
 before_script:
   - apt-get update -yqq
   - apt-get install apt-transport-https -yqq
@@ -10,11 +14,12 @@ before_script:
   - sbt sbt-version
 
 test:
+  stage: test
   script:
-    # Execute your project's tests
     - sbt clean test
     
 assemble:
+  stage: assembly
   script:
     - sbt assembly
   artifacts:
