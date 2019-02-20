@@ -1,15 +1,18 @@
 package io.mdcatapult.json
 
 import ch.qos.logback.classic.{Level, Logger}
-import com.typesafe.scalalogging.{LazyLogging}
+import com.typesafe.scalalogging.LazyLogging
 import scopt.OParser
 import java.io.{File, PrintWriter}
+
 import org.slf4j.LoggerFactory
+
 import scala.collection.mutable.ListBuffer
 import scala.io.Source
-import play.api.libs.json.{JsValue, Json, Xml}
+import play.api.libs.json._
 import play.api.libs.json.implicits.JsonXmlImplicits._
-import play.api.libs.json.Json
+
+import scala.util.{Failure, Success, Try}
 import scala.xml._
 
 sealed case class Config(
@@ -20,7 +23,9 @@ sealed case class Config(
                           recursive: Boolean = false,
                           verbose: Boolean = false,
                           debug: Boolean = false,
-                          format: String = "json")
+                          format: String = "json",
+                          element: List[String] = List[String]())
+
 
 object Combiner extends App with LazyLogging {
   val builder = OParser.builder[Config]
@@ -46,6 +51,9 @@ object Combiner extends App with LazyLogging {
       opt[String]('p', "prefix")
         .action((x, c) => c.copy(prefix = x))
         .text("prefix to give to the generated files (default none)"),
+      opt[String]('e', "element")
+        .action((x, c) => c.copy(element = x.split('.').toList))
+        .text("path to element to use as the root of the document using dot notation (default none)"),
       opt[Unit]('r', "recursive")
         .action((_, c) => c.copy(recursive = true))
         .text("folder will be scanned recursively"),
@@ -108,7 +116,7 @@ object Combiner extends App with LazyLogging {
     }
   }
 
-  def setLogLevel(config: Config) = {
+  def setLogLevel(config: Config): Unit = {
     var logLevel = Level.ERROR
     if (config.verbose) {
       logLevel = Level.INFO
@@ -116,13 +124,25 @@ object Combiner extends App with LazyLogging {
     if (config.debug) {
       logLevel = Level.DEBUG
     }
-    LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME).
-      asInstanceOf[Logger].setLevel(logLevel)
+    LoggerFactory.getLogger(getClass.getName)
+      .asInstanceOf[Logger]
+      .setLevel(logLevel)
+  }
+
+  def traverseJson(json: JsValue, parts: ListBuffer[String]): JsValue = {
+    val remaining = parts.length
+    val key = parts.remove(0)
+    val result = json(key)
+    if (remaining == 1) {
+      result
+    } else {
+      traverseJson(result, parts)
+    }
   }
 
 
   OParser.parse(parser1, args, Config()) match {
-    case Some(config: Config) => {
+    case Some(config: Config) =>
       setLogLevel(config)
       validateConfig(config)
       val files = getFiles(config.in, config.recursive, config.format).toList
@@ -131,14 +151,31 @@ object Combiner extends App with LazyLogging {
       var fileCntr = 0
       val totalFound = files.length
       var iterationCounter = 0
-      logger.info(f"FOUND: ${totalFound} files")
+      logger.info(f"FOUND: $totalFound files")
       for (file ← files) {
         iterationCounter += 1
 
-        val fileContent = config.format match {
+        var fileContent = config.format match {
           case "json" ⇒ Json.parse(Source.fromFile(file).mkString)
-          case "xml" ⇒ XML.loadString(Source.fromFile(file).mkString).toJson
+          case "xml" ⇒
+            Try(XML.loadString(Source.fromFile(file).mkString).toJson) match {
+              case Failure(e) ⇒
+                logger.error(f"Unable to parse XML for ${file.toString}: ${e.toString}")
+                Json.obj(
+                  "error" → Json.obj("ex" → e.toString, "file" → file.toString)
+                )
+              case Success(value) ⇒ value
+            }
         }
+
+        if (config.element.nonEmpty) {
+          val parts = config.element.to[ListBuffer]
+          Try(traverseJson(fileContent, parts)) match {
+            case Failure(e) ⇒ logger.error(f"Unable to find '${config.element.mkString(".")}' in file ${file.toString}")
+            case Success(result) ⇒ fileContent = result
+          }
+        }
+
         val fileContentSize = fileContent.toString().getBytes.length
 
         if ((fileContentSize + bytesTracker) > config.size) {
@@ -151,7 +188,7 @@ object Combiner extends App with LazyLogging {
         toCombine += fileContent
         bytesTracker += fileContentSize
 
-        logger.debug(f"FILE ${fileCntr + 1}: $bytesTracker/${config.size} bytes - file  $iterationCounter of $totalFound")
+        logger.debug(f"FILE ${fileCntr + 1}: $bytesTracker/${config.size} bytes - file  $iterationCounter of $totalFound: ${file.toString}")
 
       }
       // cleanup final entries
@@ -160,7 +197,7 @@ object Combiner extends App with LazyLogging {
         writeFile(config, toCombine.toList, fileCntr)
       }
       logger.info(f"WRITTEN: $fileCntr files to  ${config.out.toString}")
-    }
+
     case _ => sys.exit(1)
   }
 
