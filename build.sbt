@@ -15,7 +15,7 @@ libraryDependencies ++= Seq(
   "org.typelevel" %% "cats-macros"            % catsVersion,
   "org.typelevel" %% "cats-kernel"            % catsVersion,
   "com.github.scopt" %% "scopt"               % "4.0.0-RC2",
-  "com.typesafe.play" %% "play-json"          % "2.6.10",
-  "org.micchon" %% "play-json-xml" % "0.3.0"
+  "com.typesafe.play" %% "play-json"          % "2.7.1",
+  "org.micchon" %% "play-json-xml"            % "0.3.0"
 )
 
