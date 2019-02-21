@@ -7,7 +7,7 @@ resolvers += "Artifactory" at "http://artifactory.mdcatapult.io/artifactory/sbt-
 credentials += Credentials(Path.userHome / ".sbt" / ".credentials")
 val artifactoryPassword = sys.env.get("ARIFACTORY_PASSWORD")
 if ( artifactoryPassword ) {
-    credentials += Credentials("Artifactory Realm", "artifactory.mdcatapult.io","gitlab",artifactoryPassword) 
+    credentials += Credentials("Artifactory Realm", "artifactory.mdcatapult.io","gitlab",artifactoryPassword.get) 
 }
 
 lazy val configVersion = "1.3.3"
