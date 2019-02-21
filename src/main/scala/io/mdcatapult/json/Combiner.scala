@@ -15,6 +15,18 @@ import play.api.libs.json.implicits.JsonXmlImplicits._
 import scala.util.{Failure, Success, Try}
 import scala.xml._
 
+/**
+  * Class for handling cli arguments
+  * @param in the input directory to scan for files files
+  * @param out the output directory save files to
+  * @param size the size of file to generate in bytes (default 16Mb-16kb = 16760832)
+  * @param prefix prefix to give to the generated files
+  * @param recursive folder will be scanned recursively
+  * @param verbose show information while processing
+  * @param debug show debug
+  * @param format format of file that should be parsed
+  * @param element path to element to use as the root of the document
+  */
 sealed case class Config(
                           in: File = new File("."),
                           out: File = new File("."),
@@ -27,8 +39,14 @@ sealed case class Config(
                           element: List[String] = List[String]())
 
 
+/**
+  * Application Object for the JSON Combiner CLI
+  */
 object Combiner extends App with LazyLogging {
   val builder = OParser.builder[Config]
+  /**
+    * `Scopt` input parser to define inputs and usage
+    */
   val parser1 = {
     import builder._
     OParser.sequence(
@@ -67,7 +85,11 @@ object Combiner extends App with LazyLogging {
     )
   }
 
-
+  /**
+    * *Side Effect* validate config and short cut to exit where required
+    * @param config cli config class
+    * @return
+    */
   def validateConfig(config: Config) = {
     if (!config.in.exists()) {
       logger.error("Input directory does not exist!")
@@ -84,6 +106,12 @@ object Combiner extends App with LazyLogging {
     }
   }
 
+  /**
+    * Write output file as side effect
+    * @param config cli config class
+    * @param files contents that should be written
+    * @param suffix numeric index to be added to the end of the filename
+    */
   def writeFile(config: Config, files: List[JsValue], suffix: Int): Unit = {
     var filename = f"${config.in.getName}-$suffix.json"
     if (config.prefix.nonEmpty) {
@@ -102,6 +130,14 @@ object Combiner extends App with LazyLogging {
     logger.debug(f"BYTES: ${targetFile.length()} written to $target")
   }
 
+  /**
+    * traverse filesystem and identify files to convert & combine
+    * // @tailrec
+    * @param dir directory to scan
+    * @param recursive flag to scan recursively
+    * @param format string to identify the file extension/format
+    * @return
+    */
   def getFiles(dir: File, recursive: Boolean = false, format: String = "json"): Array[File] = {
     val files = dir.listFiles.filter(f ⇒ f.isFile && f.getName.endsWith(f".$format"))
     if (files.length == 0) {
@@ -116,6 +152,10 @@ object Combiner extends App with LazyLogging {
     }
   }
 
+  /**
+    * *Side Effect* sets logging level fof cli based on input args
+    * @param config cli config class
+    */
   def setLogLevel(config: Config): Unit = {
     var logLevel = Level.ERROR
     if (config.verbose) {
@@ -129,6 +169,13 @@ object Combiner extends App with LazyLogging {
       .setLevel(logLevel)
   }
 
+  /**
+    * traverse json object for property
+    * // @tailrec
+    * @param json object to traverse
+    * @param parts list of path parts to traverse object with
+    * @return
+    */
   def traverseJson(json: JsValue, parts: ListBuffer[String]): JsValue = {
     val remaining = parts.length
     val key = parts.remove(0)
@@ -141,6 +188,9 @@ object Combiner extends App with LazyLogging {
   }
 
 
+  /**
+    * Main Application
+    */
   OParser.parse(parser1, args, Config()) match {
     case Some(config: Config) =>
       setLogLevel(config)
