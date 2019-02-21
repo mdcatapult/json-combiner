@@ -5,7 +5,10 @@ scalacOptions += "-Ypartial-unification"
 
 resolvers += "Artifactory" at "http://artifactory.mdcatapult.io/artifactory/sbt-release/"
 credentials += Credentials(Path.userHome / ".sbt" / ".credentials")
-credentials += Credentials("Artifactory Realm", "artifactory.mdcatapult.io","gitlab","$ARIFACTORY_PASSWORD")
+val artifactoryPassword = sys.env.get("ARIFACTORY_PASSWORD")
+if ( artifactoryPassword ) {
+    credentials += Credentials("Artifactory Realm", "artifactory.mdcatapult.io","gitlab",artifactoryPassword) 
+}
 
 lazy val configVersion = "1.3.3"
 lazy val akkaVersion = "2.5.18"
