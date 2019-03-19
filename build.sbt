@@ -6,13 +6,13 @@ lazy val root = (project in file(".")).settings(
   version           := "1.0",
   scalaVersion      := "2.12.8",
   scalacOptions     += "-Ypartial-unification",
-  resolvers         += "Artifactory" at "http://artifactory.mdcatapult.io/artifactory/sbt-release/",
+  resolvers         += "Artifactory" at "http://nexus.mdcatapult.io/repository/maven-public/",
   credentials       += {
     val artifactoryPassword = sys.env.get("ARTIFACTORY_PASSWORD")
     if ( artifactoryPassword.nonEmpty ) {
-      Credentials("Artifactory Realm", "artifactory.mdcatapult.io","gitlab",artifactoryPassword.get)
+      Credentials("Sonatype Nexus Repository Manager", "nexus.mdcatapult.io","gitlab",artifactoryPassword.get)
     } else {
-      Credentials(Path.userHome / ".sbt" / ".credentials"),
+      Credentials(Path.userHome / ".sbt" / ".credentials")
     }
   },
   libraryDependencies ++= {
@@ -28,7 +28,7 @@ lazy val root = (project in file(".")).settings(
       "org.typelevel" %% "cats-kernel" % catsVersion,
       "com.github.scopt" %% "scopt" % "4.0.0-RC2",
       "com.typesafe.play" %% "play-json" % "2.7.1",
-      "io.mdcatapult" %% "play-json-xml" % "0.3.3"
+      "org.micchon" %% "play-json-xml" % "0.4.2"
     )
   }
 

@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory
 import scala.collection.mutable.ListBuffer
 import scala.io.Source
 import play.api.libs.json._
-import play.api.libs.json.implicits.JsonXmlImplicits._
+import play.api.libs.json.implicits._
 
 import scala.util.{Failure, Success, Try}
 import scala.xml._
@@ -139,12 +139,9 @@ object Combiner extends App with LazyLogging {
     * @return
     */
   def getFiles(dir: File, recursive: Boolean = false, format: String = "json"): Array[File] = {
+    logger.info(f"SCANNING: ${dir.toString}")
     val files = dir.listFiles.filter(f ⇒ f.isFile && f.getName.endsWith(f".$format"))
-    if (files.length == 0) {
-      logger.info(f"SCANNING: found ${files.length} $format files in ${dir.toString}")
-    } else {
-      logger.debug(f"SCANNING: found ${files.length} $format files in ${dir.toString}")
-    }
+    logger.info(f"FOUND: ${files.length} in ${dir.toString}")
     if (recursive) {
       files ++ dir.listFiles.filter(_.isDirectory).flatMap(getFiles(_, recursive, format))
     } else {
@@ -201,7 +198,7 @@ object Combiner extends App with LazyLogging {
       var fileCntr = 0
       val totalFound = files.length
       var iterationCounter = 0
-      logger.info(f"FOUND: $totalFound files")
+      logger.info(f"SCAN COMPLETE: $totalFound files")
       for (file ← files) {
         iterationCounter += 1
 
