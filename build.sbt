@@ -41,8 +41,9 @@ lazy val root = (project in file(".")).settings(
     runTest,
     setReleaseVersion,
     tagRelease,
+    pushChanges,
     setNextVersion,
-    pushChanges
+    pushChanges,
   )
 )
 
