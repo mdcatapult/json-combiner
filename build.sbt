@@ -1,8 +1,8 @@
-import sbtrelease.ReleasePlugin.autoImport.ReleaseTransformations.versionString
+import sbtrelease.ReleaseStateTransformations._
 
 lazy val root = (project in file(".")).settings(
   name              := "json-combiner",
-  version           := versionString,
+  version           := s"${(version in ThisBuild).value}",
   scalaVersion      := "2.12.11",
   scalacOptions     += "-Ypartial-unification",
   resolvers         += "Artifactory" at "https://nexus.mdcatapult.io/repository/maven-public/",
@@ -31,6 +31,17 @@ lazy val root = (project in file(".")).settings(
     )
   }
 
+).settings(
+  releaseProcess := Seq[ReleaseStep](
+    checkSnapshotDependencies,
+    inquireVersions,
+    runClean,
+    runTest,
+    setReleaseVersion,
+    tagRelease,
+    setNextVersion,
+    pushChanges
+  )
 )
 
 
