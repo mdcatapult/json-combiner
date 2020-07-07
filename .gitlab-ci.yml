@@ -40,6 +40,7 @@ release-jar:
   stage: release
   script:
     - sbt assembly
+    - . /scripts/utils.sh
     - /scripts/upload-files.sh 'target/scala-2.12/*.jar' $CI_COMMIT_REF_NAME
   only:
     refs:
