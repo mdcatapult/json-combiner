@@ -1,6 +1,8 @@
 import sbtrelease.ReleaseStateTransformations._
 
-releaseTagComment := s"Setting version to v${(version in ThisBuild).value}"
+releaseTagComment        := s"Setting version to v${(version in ThisBuild).value}"
+releaseCommitMessage     := s"Setting version to v${(version in ThisBuild).value}"
+releaseNextCommitMessage := s"Setting version to v${(version in ThisBuild).value}"
 
 lazy val root = (project in file(".")).settings(
   name              := "json-combiner",
