@@ -14,8 +14,8 @@ test:
   except:
     variables:
       - $CI_COMMIT_MESSAGE =~ /^Setting version to.*/
-  variables:
-    CI_DEBUG_TRACE: "true"
+    refs:
+      - tags
 
 assemble:
   stage: assembly
@@ -24,8 +24,7 @@ assemble:
   except:
     refs:
       - master
-    variables:
-      - $CI_COMMIT_MESSAGE =~ /^Setting version to.*/
+      - tags
 
 release:
   stage: release
@@ -46,4 +45,4 @@ release-jar:
     refs:
       - tags
     variables:
-      - $CI_COMMIT_MESSAGE =~ /^Setting version to.*/
+      - $CI_COMMIT_REF_NAME =~ /^v\d\.\d\.\d$/
