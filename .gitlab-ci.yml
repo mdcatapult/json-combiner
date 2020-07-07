@@ -14,6 +14,8 @@ test:
   except:
     variables:
       - $CI_COMMIT_MESSAGE =~ /^Setting version to.*/
+  variables:
+    CI_DEBUG_TRACE: "true"
 
 assemble:
   stage: assembly
