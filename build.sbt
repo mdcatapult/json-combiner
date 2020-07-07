@@ -1,12 +1,11 @@
-import sbt.Credentials
-import sbt.Keys.{credentials, version}
+import sbtrelease.ReleasePlugin.autoImport.ReleaseTransformations.versionString
 
 lazy val root = (project in file(".")).settings(
   name              := "json-combiner",
-  version           := "1.0",
-  scalaVersion      := "2.12.8",
+  version           := versionString,
+  scalaVersion      := "2.12.11",
   scalacOptions     += "-Ypartial-unification",
-  resolvers         += "Artifactory" at "http://nexus.mdcatapult.io/repository/maven-public/",
+  resolvers         += "Artifactory" at "https://nexus.mdcatapult.io/repository/maven-public/",
   credentials       += {
     val artifactoryPassword = sys.env.get("ARTIFACTORY_PASSWORD")
     if ( artifactoryPassword.nonEmpty ) {
