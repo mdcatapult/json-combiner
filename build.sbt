@@ -32,6 +32,7 @@ lazy val root = (project in file(".")).settings(
   }
 
 ).settings(
+  releaseTagComment := s"Setting version to ${(version in ThisBuild).value}",
   releaseProcess := Seq[ReleaseStep](
     checkSnapshotDependencies,
     inquireVersions,
