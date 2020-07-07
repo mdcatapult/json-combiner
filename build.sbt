@@ -40,9 +40,11 @@ lazy val root = (project in file(".")).settings(
     runClean,
     runTest,
     setReleaseVersion,
+    commitReleaseVersion,
     tagRelease,
     pushChanges,
     setNextVersion,
+    commitNextVersion,
     pushChanges,
   )
 )
