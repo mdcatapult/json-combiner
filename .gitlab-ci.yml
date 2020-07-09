@@ -8,6 +8,8 @@ default:
 
 test:
   stage: test
+  tags:
+    - wopr
   script:
     - sbt +clean coverage +test coverageReport
   coverage: /\[info\]\sAll\sdone\.\sCoverage was\s\[(\d.*)%\]/
@@ -17,6 +19,8 @@ test:
 
 assemble:
   stage: assembly
+  tags:
+    - wopr
   script:
     - sbt assembly
   except:
@@ -27,6 +31,8 @@ assemble:
 
 release:
   stage: release
+  tags:
+    - wopr
   script:
     - /scripts/release.sh -b
   only:
@@ -37,6 +43,8 @@ release:
 
 release-jar:
   stage: release
+  tags:
+    - wopr
   script:
     - sbt assembly
     - /scripts/upload-files.sh 'target/scala-2.12/*.jar' $CI_COMMIT_REF_NAME
