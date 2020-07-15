@@ -1,28 +1,55 @@
-image: openjdk:latest
-
 stages:
   - test
   - assembly
+  - release
 
-before_script:
-  - apt-get update -yqq
-  - apt-get install apt-transport-https -yqq
-  - echo "deb http://dl.bintray.com/sbt/debian /" | tee -a /etc/apt/sources.list.d/sbt.list
-  - apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 2EE0EA64E40A89B84B2DF73499E82A75642AC823
-  - apt-get update -yqq
-  - apt-get install sbt -yqq
-  - sbt sbtVersion
+default:
+  image: registry.mdcatapult.io/informatics/docker-images/ci:scala-v1.1.0
 
 test:
   stage: test
+  tags:
+    - wopr
   script:
-    - sbt clean test
-    
+    - sbt +clean coverage +test coverageReport
+  coverage: /\[info\]\sAll\sdone\.\sCoverage was\s\[(\d.*)%\]/
+  except:
+    variables:
+      - $CI_COMMIT_MESSAGE =~ /^Setting version to.*/
+
 assemble:
   stage: assembly
+  tags:
+    - wopr
   script:
     - sbt assembly
-  artifacts:
-    paths:
-      - target/scala-2.12/json-combiner-assembly-1.0.jar
-    expire_in: 1 year
+  except:
+    refs:
+      - master
+    variables:
+      - $CI_COMMIT_MESSAGE =~ /^Setting version to.*/
+
+release:
+  stage: release
+  tags:
+    - wopr
+  script:
+    - /scripts/release.sh -b
+  only:
+    - master
+  except:
+    variables:
+      - $CI_COMMIT_MESSAGE =~ /^Setting version to.*/
+
+release-jar:
+  stage: release
+  tags:
+    - wopr
+  script:
+    - sbt assembly
+    - /scripts/upload-files.sh 'target/scala-2.12/*.jar' $CI_COMMIT_REF_NAME
+  only:
+    refs:
+      - tags
+    variables:
+      - $CI_COMMIT_MESSAGE =~ /^Setting version to.*/
